@@ -1,6 +1,6 @@
 # FriskStudio Code
 
-FriskStudio Code is a lightweight, browser‑based code editor inspired by VS Code, designed by 朝陽 (frisk).  
+FriskStudio Code is a lightweight, browser‑based code editor inspired by VS Code, designed by frisk.  
 It supports Monaco Editor, multi‑language syntax highlighting, HTML live preview, theme switching, and customizable save behavior.
 
 ---
@@ -103,7 +103,7 @@ The editor automatically assigns the correct extension based on the selected lan
 
 # FriskStudio Code（フリスクスタジオコード）
 
-FriskStudio Code は、朝陽（frisk）が設計したブラウザ上で動く VS Code 風エディタです。  
+FriskStudio Code は、friskが設計したブラウザ上で動く VS Code 風エディタです。  
 Monaco Editor を採用し、多言語対応・HTMLプレビュー・テーマ切替・保存設定などを備えています。
 
 ---
