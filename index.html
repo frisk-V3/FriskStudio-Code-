@@ -1,1071 +1,585 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>FNF Psych Engine Chart Editor (対戦型)</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>FriskStudio Code</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0f0f14;
+    color: #e5e5e5;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e1e1e;
-            color: #fff;
-        }
+  /* ヘッダー */
+  .header {
+    padding: 14px 20px;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    box-shadow: 0 3px 10px #0008;
+    background: linear-gradient(90deg, #4b6cff, #9a4bff);
+  }
+  body.light {
+    background: #f5f5f5;
+    color: #222;
+  }
+  body.light .header {
+    box-shadow: 0 3px 10px #0003;
+  }
 
-        .container {
-            display: flex;
-            width: 100%;
-            height: 100vh;
-        }
+  .theme-web    { background: linear-gradient(90deg, #4b6cff, #9a4bff); }
+  .theme-style  { background: linear-gradient(90deg, #ff7f50, #ffb347); }
+  .theme-script { background: linear-gradient(90deg, #ffcc4b, #ff9a4b); }
+  .theme-c      { background: linear-gradient(90deg, #4bff7a, #2ecc71); }
+  .theme-markup { background: linear-gradient(90deg, #ff4bd8, #ff6bb0); }
+  .theme-system { background: linear-gradient(90deg, #7f7fff, #4b4bff); }
 
-        .sidebar {
-            width: 280px;
-            background: #2d2d2d;
-            padding: 20px;
-            overflow-y: auto;
-            border-right: 2px solid #444;
-            flex-shrink: 0;
-        }
+  /* 言語選択画面 */
+  #language-screen {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .lang-card {
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #0006;
+    cursor: pointer;
+    border: 1px solid #2a2a33;
+    color: #fff;
+    font-size: 13px;
+    transition: 0.18s;
+  }
+  .lang-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px #0009;
+    border-color: #fff;
+  }
+  .lang-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .cat-web    { background: radial-gradient(circle at top left, #4b6cff, #1a1a22); }
+  .cat-style  { background: radial-gradient(circle at top left, #ff7f50, #1a1a22); }
+  .cat-script { background: radial-gradient(circle at top left, #ffcc4b, #1a1a22); }
+  .cat-c      { background: radial-gradient(circle at top left, #4bff7a, #1a1a22); }
+  .cat-markup { background: radial-gradient(circle at top left, #ff4bd8, #1a1a22); }
+  .cat-system { background: radial-gradient(circle at top left, #7f7fff, #1a1a22); }
 
-        .sidebar h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #ff6b6b;
-        }
+  /* エディタ画面 */
+  #editor-screen {
+    height: calc(100vh - 52px);
+    display: none;
+    flex-direction: column;
+  }
+  .editor-top {
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1a1a22;
+    box-shadow: 0 3px 10px #0008;
+    font-size: 14px;
+  }
+  .editor-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .back-btn {
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #333;
+  }
+  .back-btn:hover { background: #555; }
 
-        .sidebar h2 {
-            font-size: 14px;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #ffda77;
-            text-transform: uppercase;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
+  #editor-area {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  #editor-container {
+    flex: 1;
+    min-width: 0;
+  }
+  #preview-pane {
+    width: 40%;
+    min-width: 260px;
+    border-left: 3px solid #4b6cff;
+    background: #ffffff;
+    color: #000;
+    box-shadow: inset 0 0 10px #0004;
+  }
+  #preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
 
-        .section {
-            margin-bottom: 20px;
-        }
+  .btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #3a3a3a;
+    cursor: pointer;
+    font-size: 13px;
+    border: none;
+    color: #eee;
+  }
+  .btn:hover { background: #505050; }
 
-        .form-group {
-            margin-bottom: 12px;
-        }
+  /* 左下の設定ボタン */
+  .settings-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 55px;
+    height: 55px;
+    background: #4b6cff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px #0008;
+    transition: 0.25s;
+    color: #fff;
+    z-index: 20;
+  }
+  .settings-btn:hover { transform: scale(1.1); }
 
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 4px;
-            color: #aaa;
-            text-transform: uppercase;
-        }
+  /* 設定モーダル */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+  }
+  .modal {
+    background: #1a1a22;
+    padding: 18px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 8px 25px #000c;
+    font-size: 13px;
+  }
+  body.light .modal {
+    background: #ffffff;
+    color: #222;
+  }
+  .modal h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+  }
+  .modal-section {
+    margin-bottom: 10px;
+  }
+  .switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 0;
+  }
+  label { cursor: pointer; }
+</style>
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #444;
-            background: #1e1e1e;
-            color: #fff;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #ff6b6b;
-            background: #252525;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 8px;
-            border: none;
-            background: #4a90e2;
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        .btn:hover {
-            background: #357abd;
-        }
-
-        .btn:active {
-            background: #2a5a99;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-secondary {
-            background: #7f8c8d;
-        }
-
-        .btn-secondary:hover {
-            background: #5d6d7b;
-        }
-
-        .btn-small {
-            width: auto;
-            padding: 8px 12px;
-            margin: 0 4px 0 0;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #444;
-            font-size: 12px;
-        }
-
-        .stat-item strong {
-            color: #ffda77;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            background: #3d3d3d;
-            color: #aaa;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        .tab-btn:hover {
-            background: #4a4a4a;
-        }
-
-        .tab-btn.active {
-            background: #4a90e2;
-            color: #fff;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            overflow: hidden;
-        }
-
-        .editor-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .editor-controls .btn {
-            width: auto;
-            padding: 8px 12px;
-            margin: 0;
-            flex-shrink: 0;
-        }
-
-        .timeline-slider {
-            flex: 1;
-            min-width: 200px;
-            height: 6px;
-            cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-            background: #444;
-            border-radius: 3px;
-            outline: none;
-        }
-
-        .timeline-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #ff6b6b;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-
-        .timeline-slider::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            background: #ff6b6b;
-            cursor: pointer;
-            border-radius: 50%;
-            border: none;
-        }
-
-        #timeDisplay {
-            font-size: 12px;
-            color: #aaa;
-            min-width: 100px;
-            text-align: right;
-        }
-
-        .audio-controls {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-        }
-
-        .audio-controls input[type="file"] {
-            flex: 1;
-            padding: 8px;
-            background: #2d2d2d;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: #fff;
-        }
-
-        .metronome-info {
-            font-size: 11px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        #editorCanvas {
-            flex: 1;
-            background: #000;
-            border: 2px solid #444;
-            border-radius: 4px;
-            cursor: crosshair;
-            display: block;
-            width: 100%;
-        }
-
-        .sidebar::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: #2d2d2d;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 4px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: #777;
-        }
-
-        .keyboard-hint {
-            font-size: 11px;
-            color: #666;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #444;
-        }
-    </style>
+<!-- Monaco Editor CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs/loader.min.js"></script>
+<script>
+  window.monacoReady = false;
+  window.monacoQueue = [];
+  require.config({
+    paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs' }
+  });
+  require(['vs/editor/editor.main'], function () {
+    window.monacoReady = true;
+    window.monacoQueue.forEach(fn => fn());
+    window.monacoQueue = [];
+  });
+</script>
 </head>
 <body>
-<div class="container">
-    <aside class="sidebar">
-        <h1>Chart Editor</h1>
 
-        <section class="section">
-            <h2>曲情報</h2>
-            <div class="form-group">
-                <label for="songName">曲名</label>
-                <input type="text" id="songName" placeholder="TestSong" value="TestSong">
-            </div>
-            <div class="form-group">
-                <label for="bpmInput">BPM</label>
-                <input type="number" id="bpmInput" placeholder="150" value="150" min="1">
-            </div>
-        </section>
+<div class="header theme-web" id="headerBar">
+  <div>FriskStudio Code</div>
+  <div style="font-size:12px;opacity:0.8;">言語を選んでスタート</div>
+</div>
 
-        <section class="section">
-            <h2>ノーツ編集モード</h2>
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="player">プレイヤー</button>
-                <button class="tab-btn" data-tab="opponent">相手</button>
-            </div>
-        </section>
+<!-- 言語選択 -->
+<div id="language-screen">
+  <!-- Web / Style / Script / C / Markup / System -->
+  <div class="lang-card cat-web"    onclick="selectLanguage('html','web')"><div class="lang-name">HTML</div><div>プレビュー付き</div></div>
+  <div class="lang-card cat-style"  onclick="selectLanguage('css','style')"><div class="lang-name">CSS</div><div>スタイルシート</div></div>
+  <div class="lang-card cat-web"    onclick="selectLanguage('javascript','web')"><div class="lang-name">JavaScript</div><div>ブラウザスクリプト</div></div>
+  <div class="lang-card cat-web"    onclick="selectLanguage('json','web')"><div class="lang-name">JSON</div><div>データ形式</div></div>
 
-        <div id="player-tab" class="tab-content active">
-            <section class="section">
-                <h2>プレイヤーノーツ</h2>
-                <div class="form-group">
-                    <label for="laneSelect">レーン選択</label>
-                    <select id="laneSelect">
-                        <option value="0">レーン 0 (赤)</option>
-                        <option value="1">レーン 1 (青)</option>
-                        <option value="2">レーン 2 (緑)</option>
-                        <option value="3">レーン 3 (黄)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="holdLength">長押し長さ (ms)</label>
-                    <input type="number" id="holdLength" placeholder="0" value="0" min="0">
-                </div>
-                <button class="btn" id="addNoteBtn">ノーツを追加</button>
-                <button class="btn btn-danger" id="deleteNoteBtn">選択ノーツ削除</button>
-                <button class="btn btn-secondary" id="clearAllBtn">全削除</button>
-                <div class="stat-item" style="margin-top: 10px;">
-                    <span>ノーツ数:</span>
-                    <strong id="noteCount">0</strong>
-                </div>
-                <div class="stat-item">
-                    <span>選択:</span>
-                    <strong id="selectedNoteDisplay">なし</strong>
-                </div>
-            </section>
-        </div>
+  <div class="lang-card cat-script" onclick="selectLanguage('python','script')"><div class="lang-name">Python</div></div>
+  <div class="lang-card cat-script" onclick="selectLanguage('php','script')"><div class="lang-name">PHP</div></div>
+  <div class="lang-card cat-script" onclick="selectLanguage('ruby','script')"><div class="lang-name">Ruby</div></div>
+  <div class="lang-card cat-script" onclick="selectLanguage('perl','script')"><div class="lang-name">Perl</div></div>
+  <div class="lang-card cat-script" onclick="selectLanguage('go','script')"><div class="lang-name">Go</div></div>
+  <div class="lang-card cat-web"    onclick="selectLanguage('nodejs','web')"><div class="lang-name">Node.js</div></div>
 
-        <div id="opponent-tab" class="tab-content">
-            <section class="section">
-                <h2>相手ノーツ</h2>
-                <div class="form-group">
-                    <label for="opponentLaneSelect">レーン選択</label>
-                    <select id="opponentLaneSelect">
-                        <option value="0">レーン 0 (赤)</option>
-                        <option value="1">レーン 1 (青)</option>
-                        <option value="2">レーン 2 (緑)</option>
-                        <option value="3">レーン 3 (黄)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="opponentHoldLength">長押し長さ (ms)</label>
-                    <input type="number" id="opponentHoldLength" placeholder="0" value="0" min="0">
-                </div>
-                <button class="btn" id="addOpponentNoteBtn">ノーツを追加</button>
-                <button class="btn btn-danger" id="deleteOpponentNoteBtn">選択ノーツ削除</button>
-                <button class="btn btn-secondary" id="clearOpponentBtn">全削除</button>
-                <div class="stat-item" style="margin-top: 10px;">
-                    <span>ノーツ数:</span>
-                    <strong id="opponentNoteCount">0</strong>
-                </div>
-                <div class="stat-item">
-                    <span>選択:</span>
-                    <strong id="selectedOpponentNoteDisplay">なし</strong>
-                </div>
-            </section>
-        </div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('c','c')"><div class="lang-name">C</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('cpp','c')"><div class="lang-name">C++</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('csharp','c')"><div class="lang-name">C#</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('fsharp','c')"><div class="lang-name">F#</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('rust','c')"><div class="lang-name">Rust</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('objc','c')"><div class="lang-name">Objective‑C</div></div>
+  <div class="lang-card cat-c"      onclick="selectLanguage('swift','c')"><div class="lang-name">Swift</div></div>
 
-        <section class="section">
-            <h2>ファイル操作</h2>
-            <button class="btn" id="downloadBtn">JSON ダウンロード</button>
-            <button class="btn" id="uploadBtn">JSON 読込</button>
-            <input type="file" id="fileInput" accept=".json" style="display:none">
-        </section>
+  <div class="lang-card cat-markup" onclick="selectLanguage('sql','markup')"><div class="lang-name">SQL</div></div>
+  <div class="lang-card cat-markup" onclick="selectLanguage('xml','markup')"><div class="lang-name">XML</div></div>
+  <div class="lang-card cat-markup" onclick="selectLanguage('markdown','markup')"><div class="lang-name">Markdown</div></div>
+  <div class="lang-card cat-system" onclick="selectLanguage('powershell','system')"><div class="lang-name">PowerShell</div></div>
+  <div class="lang-card cat-system" onclick="selectLanguage('batch','system')"><div class="lang-name">Batch</div></div>
+  <div class="lang-card cat-system" onclick="selectLanguage('dockerfile','system')"><div class="lang-name">Dockerfile</div></div>
+  <div class="lang-card cat-script" onclick="selectLanguage('java','script')"><div class="lang-name">Java</div></div>
+</div>
 
-        <section class="section">
-            <h2>再生情報</h2>
-            <div class="stat-item">
-                <span>現在時刻:</span>
-                <strong id="currentTimeDisplay">0.00s</strong>
-            </div>
-            <div class="stat-item">
-                <span>再生状態:</span>
-                <strong id="playStatus">停止中</strong>
-            </div>
-        </section>
+<!-- エディタ画面 -->
+<div id="editor-screen">
+  <div class="editor-top" id="editorTopBar">
+    <div class="editor-left">
+      <div class="back-btn" onclick="goBack()">← 戻る</div>
+      <div id="editor-title">Editor</div>
+    </div>
+    <div>
+      <button class="btn" id="downloadBtn">DL</button>
+    </div>
+  </div>
+  <div id="editor-area">
+    <div id="editor-container"></div>
+    <div id="preview-pane" style="display:none;">
+      <iframe id="preview-frame"></iframe>
+    </div>
+  </div>
+</div>
 
-        <div class="keyboard-hint">
-            <strong>キーボード操作:</strong><br>
-            ↑/W: 前へスクロール<br>
-            ↓/S: 後ろへスクロール<br>
-            A: BPM-1<br>
-            D: BPM+1
-        </div>
-    </aside>
+<!-- 左下設定ボタン -->
+<div id="settingsBtn" class="settings-btn">⚙</div>
 
-    <main class="main-content">
-        <div class="editor-controls">
-            <button class="btn btn-small" id="playBtn">▶ 再生</button>
-            <button class="btn btn-small" id="pauseBtn">⏸ 一時停止</button>
-            <button class="btn btn-small" id="stopBtn">⏹ 停止</button>
-            <input type="range" id="timelineSlider" min="0" max="100" value="0" class="timeline-slider">
-            <span id="timeDisplay">0:00 / 0:00</span>
-        </div>
+<!-- 設定モーダル -->
+<div id="settingsModal" class="modal-backdrop">
+  <div class="modal">
+    <h2>設定</h2>
 
-        <div class="audio-controls">
-            <label for="audioInput">オーディオファイル:</label>
-            <input type="file" id="audioInput" accept="audio/*">
-            <div class="metronome-info">💡 未選択時はメトロノーム音で再生</div>
-        </div>
+    <div class="modal-section">
+      <strong>テーマ</strong>
+      <div class="switch-row">
+        <label for="themeDark">ダークモード</label>
+        <input type="radio" name="theme" id="themeDark" value="dark" checked>
+      </div>
+      <div class="switch-row">
+        <label for="themeLight">ホワイトモード</label>
+        <input type="radio" name="theme" id="themeLight" value="light">
+      </div>
+    </div>
 
-        <canvas id="editorCanvas"></canvas>
-        <audio id="audioPlayer"></audio>
-    </main>
+    <div class="modal-section">
+      <strong>ファイル保存</strong>
+      <div class="switch-row">
+        <label for="overwriteToggle">読み込んだファイルを上書きする</label>
+        <input type="checkbox" id="overwriteToggle" checked>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <strong>HTMLプレビュー</strong>
+      <div class="switch-row">
+        <label for="previewAuto">自動更新</label>
+        <input type="radio" name="previewMode" id="previewAuto" value="auto" checked>
+      </div>
+      <div class="switch-row">
+        <label for="previewManual">Ctrl+Sで更新</label>
+        <input type="radio" name="previewMode" id="previewManual" value="manual">
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:8px;">
+      <button class="btn" onclick="closeSettings()">閉じる</button>
+    </div>
+  </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const state = {
-        songName: 'TestSong',
-        bpm: 150,
-        notes: [],
-        opponentNotes: [],
-        selectedNoteIndex: null,
-        selectedOpponentNoteIndex: null,
-        audioFile: null,
-        currentTime: 0,
-        duration: 0,
-        isPlaying: false,
-        pixelsPerMs: 0.15,
-        currentMode: 'player',
-        scrollOffset: 0,
-        metronomePlaying: false,
-        lastBeatTime: 0
-    };
+let currentLang = null;
+let currentGroup = 'web';
+let editor = null;
+let previewMode = 'auto';
+let overwriteEnabled = true;
+let currentTheme = 'dark';
 
-    const songNameInput = document.getElementById('songName');
-    const bpmInput = document.getElementById('bpmInput');
-    const laneSelect = document.getElementById('laneSelect');
-    const holdLengthInput = document.getElementById('holdLength');
-    const opponentLaneSelect = document.getElementById('opponentLaneSelect');
-    const opponentHoldLengthInput = document.getElementById('opponentHoldLength');
-    
-    const addNoteBtn = document.getElementById('addNoteBtn');
-    const deleteNoteBtn = document.getElementById('deleteNoteBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    const addOpponentNoteBtn = document.getElementById('addOpponentNoteBtn');
-    const deleteOpponentNoteBtn = document.getElementById('deleteOpponentNoteBtn');
-    const clearOpponentBtn = document.getElementById('clearOpponentBtn');
-    
-    const downloadBtn = document.getElementById('downloadBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fileInput = document.getElementById('fileInput');
-    const audioInput = document.getElementById('audioInput');
+const headerBar      = document.getElementById('headerBar');
+const languageScreen = document.getElementById('language-screen');
+const editorScreen   = document.getElementById('editor-screen');
+const previewPane    = document.getElementById('preview-pane');
+const previewFrame   = document.getElementById('preview-frame');
+const editorTitle    = document.getElementById('editor-title');
+const downloadBtn    = document.getElementById('downloadBtn');
+const settingsBtn    = document.getElementById('settingsBtn');
+const settingsModal  = document.getElementById('settingsModal');
 
-    const audioPlayer = document.getElementById('audioPlayer');
-    const playBtn = document.getElementById('playBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const canvas = document.getElementById('editorCanvas');
-    const ctx = canvas.getContext('2d');
-    const timelineSlider = document.getElementById('timelineSlider');
-    
-    const noteCountDisplay = document.getElementById('noteCount');
-    const opponentNoteCountDisplay = document.getElementById('opponentNoteCount');
-    const selectedNoteDisplay = document.getElementById('selectedNoteDisplay');
-    const selectedOpponentNoteDisplay = document.getElementById('selectedOpponentNoteDisplay');
-    const currentTimeDisplay = document.getElementById('currentTimeDisplay');
-    const timeDisplay = document.getElementById('timeDisplay');
-    const playStatus = document.getElementById('playStatus');
+function selectLanguage(lang, group) {
+  currentLang = lang;
+  currentGroup = group;
+  applyHeaderTheme();
+  showEditor();
+}
 
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+function applyHeaderTheme() {
+  headerBar.className = 'header';
+  if (currentGroup === 'web')    headerBar.classList.add('theme-web');
+  else if (currentGroup === 'style')  headerBar.classList.add('theme-style');
+  else if (currentGroup === 'script') headerBar.classList.add('theme-script');
+  else if (currentGroup === 'c')      headerBar.classList.add('theme-c');
+  else if (currentGroup === 'markup') headerBar.classList.add('theme-markup');
+  else if (currentGroup === 'system') headerBar.classList.add('theme-system');
+}
 
-    const laneColors = ['#ff6b6b', '#4a90e2', '#51cf66', '#ffd93d'];
-    const opponentLaneColors = ['#ff6b6b', '#4a90e2', '#51cf66', '#ffd93d'].map(c => c + '80');
-    const laneName = ['赤', '青', '緑', '黄'];
+function showEditor() {
+  languageScreen.style.display = 'none';
+  editorScreen.style.display   = 'flex';
 
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const isHtml = (currentLang === 'html');
+  previewPane.style.display = isHtml ? 'block' : 'none';
 
-    function playMetronomeClick() {
-        try {
-            const now = audioContext.currentTime;
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            
-            osc.frequency.value = 800;
-            gain.gain.setValueAtTime(0.3, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } catch (e) {
-            console.log('メトロノーム音声生成エラー:', e);
+  editorTitle.textContent = isHtml ? 'HTML Editor' : (displayName(currentLang) + ' Editor');
+  downloadBtn.textContent = 'DL ' + getExtLabel(currentLang);
+
+  initMonacoEditor();
+}
+
+function goBack() {
+  editorScreen.style.display   = 'none';
+  languageScreen.style.display = 'grid';
+}
+
+function initMonacoEditor() {
+  const run = () => {
+    const langId = mapLanguage(currentLang);
+    const value  = getDefaultCode(currentLang);
+
+    if (!editor) {
+      editor = monaco.editor.create(document.getElementById('editor-container'), {
+        value,
+        language: langId,
+        theme: currentTheme === 'dark' ? 'vs-dark' : 'vs',
+        automaticLayout: true
+      });
+
+      editor.onDidChangeModelContent(() => {
+        if (previewMode === 'auto' && currentLang === 'html') {
+          updatePreview();
         }
+      });
+
+      editor.onKeyDown(e => {
+        if (previewMode === 'manual' && currentLang === 'html' && e.ctrlKey && e.code === 'KeyS') {
+          e.preventDefault();
+          updatePreview();
+        }
+      });
+    } else {
+      monaco.editor.setModelLanguage(editor.getModel(), langId);
+      editor.setValue(value);
+      monaco.editor.setTheme(currentTheme === 'dark' ? 'vs-dark' : 'vs');
     }
 
-    function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-    }
-
-    function addNoteAtCurrentTime() {
-        const lane = parseInt(laneSelect.value);
-        const holdLength = parseInt(holdLengthInput.value) || 0;
-        const note = {
-            time: state.currentTime,
-            lane: lane,
-            hold: holdLength
-        };
-        state.notes.push(note);
-        state.notes.sort((a, b) => a.time - b.time);
-        updateDisplay();
-    }
-
-    function deleteSelectedNote() {
-        if (state.selectedNoteIndex !== null) {
-            state.notes.splice(state.selectedNoteIndex, 1);
-            state.selectedNoteIndex = null;
-            updateDisplay();
-        }
-    }
-
-    function addOpponentNoteAtCurrentTime() {
-        const lane = parseInt(opponentLaneSelect.value);
-        const holdLength = parseInt(opponentHoldLengthInput.value) || 0;
-        const note = {
-            time: state.currentTime,
-            lane: lane,
-            hold: holdLength
-        };
-        state.opponentNotes.push(note);
-        state.opponentNotes.sort((a, b) => a.time - b.time);
-        updateDisplay();
-    }
-
-    function deleteSelectedOpponentNote() {
-        if (state.selectedOpponentNoteIndex !== null) {
-            state.opponentNotes.splice(state.selectedOpponentNoteIndex, 1);
-            state.selectedOpponentNoteIndex = null;
-            updateDisplay();
-        }
-    }
-
-    function canvasClickHandler(e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const laneWidth = canvas.width / 4;
-        const lane = Math.floor(x / laneWidth);
-        const time = state.currentTime + state.scrollOffset + (canvas.height / 2 - y) / state.pixelsPerMs;
-
-        if (state.currentMode === 'player') {
-            const clickedIndex = findNoteAtPosition(x, y, false);
-            if (clickedIndex !== null) {
-                state.selectedNoteIndex = clickedIndex;
-            } else {
-                const note = {
-                    time: Math.max(0, time),
-                    lane: Math.min(3, Math.max(0, lane)),
-                    hold: 0
-                };
-                state.notes.push(note);
-                state.notes.sort((a, b) => a.time - b.time);
-            }
-        } else {
-            const clickedIndex = findNoteAtPosition(x, y, true);
-            if (clickedIndex !== null) {
-                state.selectedOpponentNoteIndex = clickedIndex;
-            } else {
-                const note = {
-                    time: Math.max(0, time),
-                    lane: Math.min(3, Math.max(0, lane)),
-                    hold: 0
-                };
-                state.opponentNotes.push(note);
-                state.opponentNotes.sort((a, b) => a.time - b.time);
-            }
-        }
-
-        updateDisplay();
-    }
-
-    function findNoteAtPosition(x, y, isOpponent) {
-        const laneWidth = canvas.width / 4;
-        const clickTolerance = 12;
-        const notes = isOpponent ? state.opponentNotes : state.notes;
-
-        for (let i = 0; i < notes.length; i++) {
-            const note = notes[i];
-            const noteX = note.lane * laneWidth + laneWidth / 2;
-            const noteY = canvas.height / 2 - (note.time - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-
-            const dx = x - noteX;
-            const dy = y - noteY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < clickTolerance + 10) {
-                return i;
-            }
-        }
-        return null;
-    }
-
-    function draw() {
-        const laneWidth = canvas.width / 4;
-
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        for (let i = 1; i < 4; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * laneWidth, 0);
-            ctx.lineTo(i * laneWidth, canvas.height);
-            ctx.stroke();
-        }
-
-        ctx.strokeStyle = '#444';
-        ctx.fillStyle = '#666';
-        ctx.font = '10px monospace';
-        const beatMs = 60000 / state.bpm;
-        const visibleMs = canvas.height / state.pixelsPerMs;
-        const startTime = state.currentTime + state.scrollOffset - visibleMs / 2;
-        const endTime = state.currentTime + state.scrollOffset + visibleMs / 2;
-
-        const firstBeat = Math.floor(startTime / beatMs);
-        const lastBeat = Math.ceil(endTime / beatMs);
-
-        for (let beat = firstBeat; beat <= lastBeat; beat++) {
-            const beatTime = beat * beatMs;
-            const beatY = canvas.height / 2 - (beatTime - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-
-            if (beatY >= 0 && beatY <= canvas.height) {
-                ctx.beginPath();
-                ctx.moveTo(0, beatY);
-                ctx.lineTo(canvas.width, beatY);
-                ctx.stroke();
-
-                if (beat % 4 === 0) {
-                    const seconds = beatTime / 1000;
-                    ctx.fillText(seconds.toFixed(1) + 's', 5, beatY - 5);
-                }
-            }
-        }
-
-        drawNotes();
-
-        ctx.strokeStyle = '#ff6b6b';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        ctx.lineTo(canvas.width, canvas.height / 2);
-        ctx.stroke();
-    }
-
-    function drawNotes() {
-        const laneWidth = canvas.width / 4;
-
-        for (let i = 0; i < state.notes.length; i++) {
-            const note = state.notes[i];
-            const isSelected = i === state.selectedNoteIndex;
-
-            const noteX = note.lane * laneWidth;
-            const noteY = canvas.height / 2 - (note.time - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-
-            if (noteY < -50 || noteY > canvas.height + 50) continue;
-
-            ctx.fillStyle = isSelected ? '#ffffff' : laneColors[note.lane];
-            ctx.globalAlpha = isSelected ? 1 : 0.9;
-            ctx.fillRect(noteX + 5, noteY - 10, laneWidth - 10, 20);
-
-            if (note.hold > 0) {
-                const holdEndY = canvas.height / 2 - (note.time + note.hold - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-                ctx.fillRect(noteX + laneWidth / 2 - 5, noteY, 10, holdEndY - noteY);
-            }
-
-            if (isSelected) {
-                ctx.strokeStyle = '#ffff00';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(noteX + 5, noteY - 10, laneWidth - 10, 20);
-            }
-
-            ctx.globalAlpha = 1;
-        }
-
-        for (let i = 0; i < state.opponentNotes.length; i++) {
-            const note = state.opponentNotes[i];
-            const isSelected = i === state.selectedOpponentNoteIndex;
-
-            const noteX = note.lane * laneWidth;
-            const noteY = canvas.height / 2 - (note.time - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-
-            if (noteY < -50 || noteY > canvas.height + 50) continue;
-
-            ctx.fillStyle = isSelected ? '#ffffff' : opponentLaneColors[note.lane];
-            ctx.globalAlpha = isSelected ? 1 : 0.6;
-            ctx.fillRect(noteX + 8, noteY - 8, laneWidth - 16, 16);
-
-            if (note.hold > 0) {
-                const holdEndY = canvas.height / 2 - (note.time + note.hold - state.currentTime - state.scrollOffset) * state.pixelsPerMs;
-                ctx.fillRect(noteX + laneWidth / 2 - 2, noteY, 4, holdEndY - noteY);
-            }
-
-            if (isSelected) {
-                ctx.strokeStyle = '#ffff00';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(noteX + 8, noteY - 8, laneWidth - 16, 16);
-            }
-
-            ctx.globalAlpha = 1;
-        }
-    }
-
-    function downloadJSON() {
-        const beatMs = 60000 / state.bpm;
-        const sectionDuration = beatMs * 4;
-
-        const playerSections = convertNotesToSections(state.notes, sectionDuration);
-        const opponentSections = convertNotesToSections(state.opponentNotes, sectionDuration);
-
-        const jsonData = {
-            song: {
-                song: state.songName,
-                bpm: state.bpm,
-                notes: playerSections,
-                opponentNotes: opponentSections
-            }
-        };
-
-        const jsonStr = JSON.stringify(jsonData, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${state.songName}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function convertNotesToSections(notes, sectionDuration) {
-        if (notes.length === 0) {
-            return [{ sectionNotes: [], mustHitSection: true }];
-        }
-
-        const sections = [];
-        let currentSection = { sectionNotes: [], mustHitSection: true };
-        let currentSectionStartTime = 0;
-
-        for (const note of notes) {
-            const sectionIndex = Math.floor(note.time / sectionDuration);
-            const sectionStartTime = sectionIndex * sectionDuration;
-
-            while (currentSectionStartTime < sectionStartTime) {
-                sections.push(currentSection);
-                currentSectionStartTime += sectionDuration;
-                currentSection = { sectionNotes: [], mustHitSection: true };
-            }
-
-            currentSection.sectionNotes.push([
-                note.time - currentSectionStartTime,
-                note.lane,
-                note.hold
-            ]);
-        }
-
-        sections.push(currentSection);
-        return sections;
-    }
-
-    function uploadJSON(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const json = JSON.parse(event.target.result);
-                state.songName = json.song.song || 'TestSong';
-                state.bpm = json.song.bpm || 150;
-
-                const beatMs = 60000 / state.bpm;
-                const sectionDuration = beatMs * 4;
-
-                state.notes = [];
-                state.opponentNotes = [];
-
-                if (json.song.notes) {
-                    for (let sectionIndex = 0; sectionIndex < json.song.notes.length; sectionIndex++) {
-                        const section = json.song.notes[sectionIndex];
-                        const sectionStartTime = sectionIndex * sectionDuration;
-
-                        for (const noteData of section.sectionNotes) {
-                            const note = {
-                                time: sectionStartTime + noteData[0],
-                                lane: noteData[1],
-                                hold: noteData[2] || 0
-                            };
-                            state.notes.push(note);
-                        }
-                    }
-                }
-
-                if (json.song.opponentNotes) {
-                    for (let sectionIndex = 0; sectionIndex < json.song.opponentNotes.length; sectionIndex++) {
-                        const section = json.song.opponentNotes[sectionIndex];
-                        const sectionStartTime = sectionIndex * sectionDuration;
-
-                        for (const noteData of section.sectionNotes) {
-                            const note = {
-                                time: sectionStartTime + noteData[0],
-                                lane: noteData[1],
-                                hold: noteData[2] || 0
-                            };
-                            state.opponentNotes.push(note);
-                        }
-                    }
-                }
-
-                songNameInput.value = state.songName;
-                bpmInput.value = state.bpm;
-                state.selectedNoteIndex = null;
-                state.selectedOpponentNoteIndex = null;
-                updateDisplay();
-            } catch (error) {
-                alert('JSON読込に失敗しました: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    function updateDisplay() {
-        noteCountDisplay.textContent = state.notes.length;
-        opponentNoteCountDisplay.textContent = state.opponentNotes.length;
-
-        if (state.currentMode === 'player') {
-            if (state.selectedNoteIndex !== null) {
-                const note = state.notes[state.selectedNoteIndex];
-                selectedNoteDisplay.textContent = `${laneName[note.lane]} @ ${note.time.toFixed(0)}ms`;
-            } else {
-                selectedNoteDisplay.textContent = 'なし';
-            }
-        } else {
-            if (state.selectedOpponentNoteIndex !== null) {
-                const note = state.opponentNotes[state.selectedOpponentNoteIndex];
-                selectedOpponentNoteDisplay.textContent = `${laneName[note.lane]} @ ${note.time.toFixed(0)}ms`;
-            } else {
-                selectedOpponentNoteDisplay.textContent = 'なし';
-            }
-        }
-
-        currentTimeDisplay.textContent = (state.currentTime / 1000).toFixed(2) + 's';
-
-        const maxDuration = Math.max(state.duration, 10000);
-        if (maxDuration > 0) {
-            const ratio = (state.currentTime / maxDuration) * 100;
-            timelineSlider.value = ratio;
-        }
-
-        const minutes = Math.floor(state.currentTime / 60000);
-        const seconds = Math.floor((state.currentTime % 60000) / 1000);
-        const durationMinutes = Math.floor(maxDuration / 60000);
-        const durationSeconds = Math.floor((maxDuration % 60000) / 1000);
-        timeDisplay.textContent = `${minutes}:${String(seconds).padStart(2, '0')} / ${durationMinutes}:${String(durationSeconds).padStart(2, '0')}`;
-
-        playStatus.textContent = state.isPlaying ? '再生中' : '停止中';
-
-        if (state.metronomePlaying) {
-            const beatMs = 60000 / state.bpm;
-            if (state.currentTime - state.lastBeatTime >= beatMs) {
-                playMetronomeClick();
-                state.lastBeatTime = state.currentTime;
-            }
-        }
-
-        draw();
-    }
-
-    function startPlayback() {
-        if (audioPlayer.src) {
-            audioPlayer.play();
-        }
-        state.isPlaying = true;
-        state.metronomePlaying = true;
-        updateDisplay();
-    }
-
-    function pausePlayback() {
-        if (audioPlayer.src) {
-            audioPlayer.pause();
-        }
-        state.isPlaying = false;
-        state.metronomePlaying = false;
-        updateDisplay();
-    }
-
-    function stopPlayback() {
-        if (audioPlayer.src) {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
-        }
-        state.currentTime = 0;
-        state.isPlaying = false;
-        state.metronomePlaying = false;
-        state.scrollOffset = 0;
-        updateDisplay();
-    }
-
-    function handleKeyboard(e) {
-        const step = 500;
-        const bpmStep = 1;
-
-        switch(e.key.toLowerCase()) {
-            case 'arrowup':
-            case 'w':
-                state.scrollOffset = Math.max(0, state.scrollOffset - step);
-                e.preventDefault();
-                updateDisplay();
-                break;
-            case 'arrowdown':
-            case 's':
-                state.scrollOffset += step;
-                e.preventDefault();
-                updateDisplay();
-                break;
-            case 'a':
-                state.bpm = Math.max(1, state.bpm - bpmStep);
-                bpmInput.value = state.bpm;
-                e.preventDefault();
-                updateDisplay();
-                break;
-            case 'd':
-                state.bpm += bpmStep;
-                bpmInput.value = state.bpm;
-                e.preventDefault();
-                updateDisplay();
-                break;
-        }
-    }
-
-    function startAnimationLoop() {
-        if (state.isPlaying && !audioPlayer.src) {
-            const frameTime = 16.67;
-            state.currentTime += frameTime;
-            
-            const maxDuration = Math.max(state.duration, 30000);
-            if (state.currentTime >= maxDuration) {
-                stopPlayback();
-            }
-        }
-
-        updateDisplay();
-        requestAnimationFrame(startAnimationLoop);
-    }
-
-    // イベントリスナー登録
-    songNameInput.addEventListener('change', (e) => {
-        state.songName = e.target.value;
-    });
-
-    bpmInput.addEventListener('change', (e) => {
-        state.bpm = Math.max(1, parseInt(e.target.value) || 150);
-        bpmInput.value = state.bpm;
-    });
-
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tabName = e.target.dataset.tab;
-            tabButtons.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            state.currentMode = tabName;
-        });
-    });
-
-    audioInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            audioPlayer.src = url;
-            state.audioFile = file;
-            audioPlayer.addEventListener('loadedmetadata', () => {
-                state.duration = audioPlayer.duration * 1000;
-                updateDisplay();
-            }, { once: true });
-        }
-    });
-
-    addNoteBtn.addEventListener('click', addNoteAtCurrentTime);
-    deleteNoteBtn.addEventListener('click', deleteSelectedNote);
-    clearAllBtn.addEventListener('click', () => {
-        if (confirm('全てのプレイヤーノーツを削除しますか？')) {
-            state.notes = [];
-            state.selectedNoteIndex = null;
-            updateDisplay();
-        }
-    });
-
-    addOpponentNoteBtn.addEventListener('click', addOpponentNoteAtCurrentTime);
-    deleteOpponentNoteBtn.addEventListener('click', deleteSelectedOpponentNote);
-    clearOpponentBtn.addEventListener('click', () => {
-        if (confirm('全ての相手ノーツを削除しますか？')) {
-            state.opponentNotes = [];
-            state.selectedOpponentNoteIndex = null;
-            updateDisplay();
-        }
-    });
-
-    playBtn.addEventListener('click', startPlayback);
-    pauseBtn.addEventListener('click', pausePlayback);
-    stopBtn.addEventListener('click', stopPlayback);
-
-    timelineSlider.addEventListener('input', (e) => {
-        const ratio = parseFloat(e.target.value) / 100;
-        state.currentTime = ratio * Math.max(state.duration, 10000);
-        if (audioPlayer.src) {
-            audioPlayer.currentTime = state.currentTime / 1000;
-        }
-        updateDisplay();
-    });
-
-    audioPlayer.addEventListener('timeupdate', () => {
-        state.currentTime = audioPlayer.currentTime * 1000;
-        updateDisplay();
-    });
-
-    audioPlayer.addEventListener('ended', stopPlayback);
-
-    downloadBtn.addEventListener('click', downloadJSON);
-    uploadBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', uploadJSON);
-
-    canvas.addEventListener('click', canvasClickHandler);
-
-    document.addEventListener('keydown', handleKeyboard);
-
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        draw();
-    });
-
-    // 初期化
-    resizeCanvas();
-    state.songName = songNameInput.value;
-    state.bpm = parseInt(bpmInput.value) || 150;
-    updateDisplay();
-    startAnimationLoop();
+    if (currentLang === 'html') updatePreview();
+  };
+
+  if (window.monacoReady) run();
+  else window.monacoQueue.push(run);
+}
+
+function mapLanguage(lang) {
+  const map = {
+    html: 'html',
+    css: 'css',
+    javascript: 'javascript',
+    json: 'json',
+    python: 'python',
+    php: 'php',
+    ruby: 'ruby',
+    perl: 'plaintext',
+    go: 'go',
+    nodejs: 'javascript',
+    c: 'c',
+    cpp: 'cpp',
+    csharp: 'csharp',
+    fsharp: 'fsharp',
+    rust: 'rust',
+    objc: 'objective-c',
+    swift: 'swift',
+    sql: 'sql',
+    xml: 'xml',
+    markdown: 'markdown',
+    powershell: 'powershell',
+    batch: 'bat',
+    dockerfile: 'dockerfile',
+    java: 'java'
+  };
+  return map[lang] || 'plaintext';
+}
+
+function displayName(lang) {
+  const map = {
+    html: 'HTML',
+    css: 'CSS',
+    javascript: 'JavaScript',
+    json: 'JSON',
+    python: 'Python',
+    php: 'PHP',
+    ruby: 'Ruby',
+    perl: 'Perl',
+    go: 'Go',
+    nodejs: 'Node.js',
+    c: 'C',
+    cpp: 'C++',
+    csharp: 'C#',
+    fsharp: 'F#',
+    rust: 'Rust',
+    objc: 'Objective‑C',
+    swift: 'Swift',
+    sql: 'SQL',
+    xml: 'XML',
+    markdown: 'Markdown',
+    powershell: 'PowerShell',
+    batch: 'Batch',
+    dockerfile: 'Dockerfile',
+    java: 'Java'
+  };
+  return map[lang] || lang;
+}
+
+function getExtLabel(lang) {
+  const map = {
+    html: '.html',
+    css: '.css',
+    javascript: '.js',
+    json: '.json',
+    python: '.py',
+    php: '.php',
+    ruby: '.rb',
+    perl: '.pl',
+    go: '.go',
+    nodejs: '.js',
+    c: '.c',
+    cpp: '.cpp',
+    csharp: '.cs',
+    fsharp: '.fs',
+    rust: '.rs',
+    objc: '.m',
+    swift: '.swift',
+    sql: '.sql',
+    xml: '.xml',
+    markdown: '.md',
+    powershell: '.ps1',
+    batch: '.bat',
+    dockerfile: 'Dockerfile',
+    java: '.java'
+  };
+  return map[lang] || '.txt';
+}
+
+function getDefaultCode(lang) {
+  if (lang === 'html') return '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <title>FriskStudio</title>\n</head>\n<body>\n  <h1>Hello FriskStudio Code!</h1>\n</body>\n</html>';
+  if (lang === 'css') return 'body {\n  background: #222;\n  color: #eee;\n}';
+  if (lang === 'javascript' || lang === 'nodejs') return 'console.log("Hello FriskStudio Code");';
+  if (lang === 'json') return '{\n  "message": "Hello FriskStudio Code"\n}';
+  if (lang === 'python') return 'print("Hello FriskStudio Code")';
+  if (lang === 'php') return '<?php\necho "Hello FriskStudio Code";\n';
+  if (lang === 'ruby') return 'puts "Hello FriskStudio Code"';
+  if (lang === 'perl') return 'print "Hello FriskStudio Code\\n";';
+  if (lang === 'go') return 'package main\nimport "fmt"\nfunc main(){\n  fmt.Println("Hello FriskStudio Code")\n}';
+  if (lang === 'c') return '#include <stdio.h>\nint main(){\n  printf("Hello FriskStudio Code\\n");\n  return 0;\n}';
+  if (lang === 'cpp') return '#include <iostream>\nint main(){\n  std::cout << "Hello FriskStudio Code\\n";\n}';
+  if (lang === 'csharp') return 'using System;\nclass Program {\n  static void Main(){\n    Console.WriteLine("Hello FriskStudio Code");\n  }\n}';
+  if (lang === 'fsharp') return 'printfn "Hello FriskStudio Code"';
+  if (lang === 'rust') return 'fn main(){\n  println!("Hello FriskStudio Code");\n}';
+  if (lang === 'objc') return '@import Foundation;\nint main(){\n  NSLog(@"Hello FriskStudio Code");\n  return 0;\n}';
+  if (lang === 'swift') return 'print("Hello FriskStudio Code")';
+  if (lang === 'sql') return 'SELECT "Hello FriskStudio Code" AS message;';
+  if (lang === 'xml') return '<root>\n  <message>Hello FriskStudio Code</message>\n</root>';
+  if (lang === 'markdown') return '# Hello FriskStudio Code';
+  if (lang === 'powershell') return 'Write-Host "Hello FriskStudio Code"';
+  if (lang === 'batch') return '@echo off\necho Hello FriskStudio Code';
+  if (lang === 'dockerfile') return 'FROM alpine:latest\nCMD echo "Hello FriskStudio Code"';
+  if (lang === 'java') return 'class Main {\n  public static void main(String[] args){\n    System.out.println("Hello FriskStudio Code");\n  }\n}';
+  return '';
+}
+
+function updatePreview() {
+  if (!editor) return;
+  const code = editor.getValue();
+  const doc = previewFrame.contentWindow.document;
+  doc.open();
+  doc.write(code);
+  doc.close();
+}
+
+/* 設定モーダル */
+settingsBtn.addEventListener('click', () => {
+  settingsModal.style.display = 'flex';
+});
+function closeSettings() {
+  settingsModal.style.display = 'none';
+}
+
+/* 設定反映 */
+document.getElementById('themeDark').addEventListener('change', () => {
+  if (document.getElementById('themeDark').checked) {
+    currentTheme = 'dark';
+    document.body.classList.remove('light');
+    if (editor && window.monacoReady) monaco.editor.setTheme('vs-dark');
+  }
+});
+document.getElementById('themeLight').addEventListener('change', () => {
+  if (document.getElementById('themeLight').checked) {
+    currentTheme = 'light';
+    document.body.classList.add('light');
+    if (editor && window.monacoReady) monaco.editor.setTheme('vs');
+  }
+});
+document.getElementById('overwriteToggle').addEventListener('change', e => {
+  overwriteEnabled = e.target.checked;
+  // ここで将来「読み込んだファイルを上書きするかどうか」に使う
+});
+document.getElementById('previewAuto').addEventListener('change', () => {
+  if (document.getElementById('previewAuto').checked) {
+    previewMode = 'auto';
+    if (currentLang === 'html') updatePreview();
+  }
+});
+document.getElementById('previewManual').addEventListener('change', () => {
+  if (document.getElementById('previewManual').checked) {
+    previewMode = 'manual';
+  }
+});
+
+/* ダウンロード */
+downloadBtn.addEventListener('click', () => {
+  if (!editor) return;
+  const blob = new Blob([editor.getValue()], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'code' + getExtLabel(currentLang);
+  a.click();
+  URL.revokeObjectURL(a.href);
 });
 </script>
+
 </body>
 </html>
