@@ -11,8 +11,6 @@
     color: #e5e5e5;
     font-family: "Segoe UI", system-ui, sans-serif;
   }
-
-  /* ヘッダー */
   .header {
     padding: 14px 20px;
     font-size: 20px;
@@ -31,7 +29,6 @@
   body.light .header {
     box-shadow: 0 3px 10px #0003;
   }
-
   .theme-web    { background: linear-gradient(90deg, #4b6cff, #9a4bff); }
   .theme-style  { background: linear-gradient(90deg, #ff7f50, #ffb347); }
   .theme-script { background: linear-gradient(90deg, #ffcc4b, #ff9a4b); }
@@ -39,7 +36,6 @@
   .theme-markup { background: linear-gradient(90deg, #ff4bd8, #ff6bb0); }
   .theme-system { background: linear-gradient(90deg, #7f7fff, #4b4bff); }
 
-  /* 言語選択画面 */
   #language-screen {
     padding: 20px;
     display: grid;
@@ -73,7 +69,6 @@
   .cat-markup { background: radial-gradient(circle at top left, #ff4bd8, #1a1a22); }
   .cat-system { background: radial-gradient(circle at top left, #7f7fff, #1a1a22); }
 
-  /* エディタ画面 */
   #editor-screen {
     height: calc(100vh - 52px);
     display: none;
@@ -135,7 +130,6 @@
   }
   .btn:hover { background: #505050; }
 
-  /* 左下の設定ボタン */
   .settings-btn {
     position: fixed;
     bottom: 20px;
@@ -156,7 +150,6 @@
   }
   .settings-btn:hover { transform: scale(1.1); }
 
-  /* 設定モーダル */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -192,9 +185,17 @@
     margin: 4px 0;
   }
   label { cursor: pointer; }
+
+  #error-console {
+    height: 120px;
+    background: #1a1a22;
+    border-top: 2px solid #333;
+    overflow-y: auto;
+    font-size: 13px;
+    padding: 8px;
+  }
 </style>
 
-<!-- Monaco Editor CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs/loader.min.js"></script>
 <script>
   window.monacoReady = false;
@@ -208,6 +209,7 @@
     window.monacoQueue = [];
   });
 </script>
+<script src="https://unpkg.com/luaparse@0.3.1/dist/luaparse.min.js"></script>
 </head>
 <body>
 
@@ -216,9 +218,7 @@
   <div style="font-size:12px;opacity:0.8;">言語を選んでスタート</div>
 </div>
 
-<!-- 言語選択 -->
 <div id="language-screen">
-  <!-- Web / Style / Script / C / Markup / System -->
   <div class="lang-card cat-web"    onclick="selectLanguage('html','web')"><div class="lang-name">HTML</div><div>プレビュー付き</div></div>
   <div class="lang-card cat-style"  onclick="selectLanguage('css','style')"><div class="lang-name">CSS</div><div>スタイルシート</div></div>
   <div class="lang-card cat-web"    onclick="selectLanguage('javascript','web')"><div class="lang-name">JavaScript</div><div>ブラウザスクリプト</div></div>
@@ -246,9 +246,10 @@
   <div class="lang-card cat-system" onclick="selectLanguage('batch','system')"><div class="lang-name">Batch</div></div>
   <div class="lang-card cat-system" onclick="selectLanguage('dockerfile','system')"><div class="lang-name">Dockerfile</div></div>
   <div class="lang-card cat-script" onclick="selectLanguage('java','script')"><div class="lang-name">Java</div></div>
+
+  <div class="lang-card cat-script" onclick="selectLanguage('lua','script')"><div class="lang-name">Lua</div><div>スクリプト</div></div>
 </div>
 
-<!-- エディタ画面 -->
 <div id="editor-screen">
   <div class="editor-top" id="editorTopBar">
     <div class="editor-left">
@@ -267,10 +268,10 @@
   </div>
 </div>
 
-<!-- 左下設定ボタン -->
+<div id="error-console"></div>
+
 <div id="settingsBtn" class="settings-btn">⚙</div>
 
-<!-- 設定モーダル -->
 <div id="settingsModal" class="modal-backdrop">
   <div class="modal">
     <h2>設定</h2>
@@ -383,6 +384,7 @@ function initMonacoEditor() {
         if (previewMode === 'auto' && currentLang === 'html') {
           updatePreview();
         }
+        validateCode();
       });
 
       editor.onKeyDown(e => {
@@ -398,6 +400,8 @@ function initMonacoEditor() {
     }
 
     if (currentLang === 'html') updatePreview();
+    else document.getElementById('error-console').innerHTML = '';
+    validateCode();
   };
 
   if (window.monacoReady) run();
@@ -429,7 +433,8 @@ function mapLanguage(lang) {
     powershell: 'powershell',
     batch: 'bat',
     dockerfile: 'dockerfile',
-    java: 'java'
+    java: 'java',
+    lua: 'lua'
   };
   return map[lang] || 'plaintext';
 }
@@ -459,7 +464,8 @@ function displayName(lang) {
     powershell: 'PowerShell',
     batch: 'Batch',
     dockerfile: 'Dockerfile',
-    java: 'Java'
+    java: 'Java',
+    lua: 'Lua'
   };
   return map[lang] || lang;
 }
@@ -489,7 +495,8 @@ function getExtLabel(lang) {
     powershell: '.ps1',
     batch: '.bat',
     dockerfile: 'Dockerfile',
-    java: '.java'
+    java: '.java',
+    lua: '.lua'
   };
   return map[lang] || '.txt';
 }
@@ -518,6 +525,7 @@ function getDefaultCode(lang) {
   if (lang === 'batch') return '@echo off\necho Hello FriskStudio Code';
   if (lang === 'dockerfile') return 'FROM alpine:latest\nCMD echo "Hello FriskStudio Code"';
   if (lang === 'java') return 'class Main {\n  public static void main(String[] args){\n    System.out.println("Hello FriskStudio Code");\n  }\n}';
+  if (lang === 'lua') return 'print("Hello FriskStudio Code")';
   return '';
 }
 
@@ -530,7 +538,40 @@ function updatePreview() {
   doc.close();
 }
 
-/* 設定モーダル */
+function validateCode() {
+  if (!editor) return;
+  const consoleBox = document.getElementById('error-console');
+  if (!consoleBox) return;
+
+  consoleBox.innerHTML = '';
+  const code = editor.getValue();
+  const lang = currentLang;
+  let markers = [];
+
+  if (lang === 'lua') {
+    try {
+      luaparse.parse(code);
+    } catch (e) {
+      markers.push({
+        severity: monaco.MarkerSeverity.Error,
+        message: e.message,
+        startLineNumber: e.line,
+        startColumn: e.column,
+        endLineNumber: e.line,
+        endColumn: e.column + 1
+      });
+      const div = document.createElement('div');
+      div.style.color = '#ff6b6b';
+      div.textContent = `Lua Error: ${e.message} (line ${e.line})`;
+      consoleBox.appendChild(div);
+    }
+  }
+
+  if (window.monacoReady && editor) {
+    monaco.editor.setModelMarkers(editor.getModel(), 'owner', markers);
+  }
+}
+
 settingsBtn.addEventListener('click', () => {
   settingsModal.style.display = 'flex';
 });
@@ -538,7 +579,6 @@ function closeSettings() {
   settingsModal.style.display = 'none';
 }
 
-/* 設定反映 */
 document.getElementById('themeDark').addEventListener('change', () => {
   if (document.getElementById('themeDark').checked) {
     currentTheme = 'dark';
@@ -555,7 +595,6 @@ document.getElementById('themeLight').addEventListener('change', () => {
 });
 document.getElementById('overwriteToggle').addEventListener('change', e => {
   overwriteEnabled = e.target.checked;
-  // ここで将来「読み込んだファイルを上書きするかどうか」に使う
 });
 document.getElementById('previewAuto').addEventListener('change', () => {
   if (document.getElementById('previewAuto').checked) {
@@ -569,7 +608,6 @@ document.getElementById('previewManual').addEventListener('change', () => {
   }
 });
 
-/* ダウンロード */
 downloadBtn.addEventListener('click', () => {
   if (!editor) return;
   const blob = new Blob([editor.getValue()], { type: 'text/plain' });
